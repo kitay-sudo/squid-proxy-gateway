@@ -63,13 +63,13 @@ export HTTPS_PROXY="http://user:pass@proxy-ip:3128"
 ## ⚡ Быстрая установка
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/squid-proxy-gateway/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh | sudo bash
 ```
 
 Или скачай и запусти:
 
 ```bash
-wget https://raw.githubusercontent.com/YOUR_USERNAME/squid-proxy-gateway/main/install.sh
+wget https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh
 chmod +x install.sh
 sudo ./install.sh
 ```
@@ -179,7 +179,7 @@ HTTPS_PROXY="http://proxyuser:PASSWORD@IP_СЕРВЕРА:3128" curl https://ifco
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ```bash
 # Логи на сервере
@@ -196,10 +196,10 @@ squid -k parse
 
 ## 📄 License
 
-MIT © 2024
+MIT © 2025
 
 ---
 
 <p align="center">
-  <sub>⭐ Star this repo if it helped you!</sub>
+  <sub>⭐ Поставь звезду, если пригодилось!</sub>
 </p>
