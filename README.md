@@ -198,8 +198,6 @@ squid -k parse
 
 MIT © 2025
 
----
-
 <p align="center">
   <sub>⭐ Поставь звезду, если пригодилось!</sub>
 </p>
