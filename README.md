@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./logo.png" alt="squid.sh" width="400">
+</p>
+
 # 🦑 squid-proxy-gateway
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
