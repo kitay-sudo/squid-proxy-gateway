@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="./logo.png" alt="squid.sh" width="400">
 </p>
 
