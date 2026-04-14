@@ -354,7 +354,9 @@ ufw delete <номер v6>
 
 ## 📄 License
 
-MIT © 2025
+Распространяется под лицензией [MIT](./LICENSE) — свободно используй, модифицируй и распространяй с указанием авторства.
+
+MIT © 2026 [squid-proxy-gateway](https://github.com/kitay-sudo/squid-proxy-gateway)
 
 <p align="center">
   <sub>⭐ Поставь звезду, если пригодилось!</sub>
