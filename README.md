@@ -65,11 +65,7 @@ export HTTPS_PROXY="http://user:pass@proxy-ip:3128"
 
 ## ⚡ Быстрая установка
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh | sudo bash
-```
-
-Или скачай и запусти:
+### Вариант 1 — скачать и запустить (рекомендуется)
 
 ```bash
 wget https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh
@@ -78,6 +74,25 @@ sudo ./install.sh
 ```
 
 Скрипт спросит логин, пароль и порт — всё остальное сделает сам.
+
+### Вариант 2 — одной командой через curl
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh | sudo bash
+```
+
+Скрипт сам читает ввод из `/dev/tty`, поэтому интерактивные вопросы (логин/пароль/порт) работают даже при пайпе.
+
+### Вариант 3 — неинтерактивно (для автоматизации)
+
+Передай логин/пароль/порт через переменные окружения — никаких вопросов:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh \
+  | sudo PROXY_USER=alice PROXY_PASS='SuperSecret123' PROXY_PORT=3128 bash
+```
+
+Если `PROXY_PASS` не задан и `/dev/tty` недоступен (cloud-init, ansible без pty и т.п.), скрипт сгенерирует случайный пароль и распечатает его в конце — обязательно сохрани его сразу.
 
 ---
 
@@ -349,6 +364,14 @@ ufw delete <номер v6>
 
 **ETIMEDOUT на клиенте, хотя прокси отвечает**
 У axios без явного `httpAgent`/`httpsAgent` через переменные окружения бывает double-proxy. Добавь `proxy: false` в axios config (см. Node.js-пример выше).
+
+**`Password cannot be empty` при `curl ... | sudo bash`**
+Старая версия скрипта не умела читать из `/dev/tty` при пайпе. Обнови `install.sh` до текущей версии — либо используй неинтерактивный режим:
+```bash
+curl -fsSL https://raw.githubusercontent.com/kitay-sudo/squid-proxy-gateway/main/install.sh \
+  | sudo PROXY_USER=alice PROXY_PASS='SuperSecret123' PROXY_PORT=3128 bash
+```
+Если установка успела создать пакеты, но прервалась — просто запусти заново, скрипт идемпотентен.
 
 ---
 

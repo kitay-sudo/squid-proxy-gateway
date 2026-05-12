@@ -3,6 +3,16 @@
 #===============================================================================
 #  🦑 squid-proxy-gateway installer
 #  One-command Squid proxy setup with authentication
+#
+#  Usage:
+#    Interactive (recommended):
+#      curl -fsSL <url>/install.sh -o install.sh && sudo bash install.sh
+#
+#    Piped (will read from /dev/tty if available):
+#      curl -fsSL <url>/install.sh | sudo bash
+#
+#    Non-interactive (env vars):
+#      curl -fsSL <url>/install.sh | sudo PROXY_USER=alice PROXY_PASS=secret PROXY_PORT=3128 bash
 #===============================================================================
 
 set -e
@@ -32,24 +42,78 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Get username
-read -p "👤 Proxy username [proxyuser]: " PROXY_USER
+# Detect input source: prefer /dev/tty so interactive read works even
+# when the script is piped via `curl | bash`.
+INPUT_TTY=""
+if [[ -r /dev/tty ]]; then
+    INPUT_TTY="/dev/tty"
+fi
+
+prompt() {
+    # prompt VAR "message" [-s]
+    local __var="$1"
+    local __msg="$2"
+    local __silent="$3"
+    local __value=""
+
+    if [[ -n "$INPUT_TTY" ]]; then
+        if [[ "$__silent" == "-s" ]]; then
+            read -s -r -p "$__msg" __value < "$INPUT_TTY"
+            echo "" > /dev/tty
+        else
+            read -r -p "$__msg" __value < "$INPUT_TTY"
+        fi
+    fi
+
+    printf -v "$__var" '%s' "$__value"
+}
+
+# Generate a strong random password (used when no TTY and no PROXY_PASS env)
+gen_password() {
+    if command -v openssl &> /dev/null; then
+        openssl rand -base64 24 | tr -d '/+=' | cut -c1-24
+    else
+        tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 24
+    fi
+}
+
+# --- Username ---------------------------------------------------------------
+if [[ -z "$PROXY_USER" ]]; then
+    prompt PROXY_USER "👤 Proxy username [proxyuser]: "
+fi
 PROXY_USER=${PROXY_USER:-proxyuser}
 
-# Get password
-while true; do
-    read -s -p "🔑 Proxy password: " PROXY_PASS
-    echo ""
-    if [[ -z "$PROXY_PASS" ]]; then
-        echo -e "${RED}Password cannot be empty${NC}"
+# --- Password ---------------------------------------------------------------
+if [[ -z "$PROXY_PASS" ]]; then
+    if [[ -n "$INPUT_TTY" ]]; then
+        while true; do
+            prompt PROXY_PASS "🔑 Proxy password: " -s
+            if [[ -z "$PROXY_PASS" ]]; then
+                echo -e "${RED}Password cannot be empty${NC}"
+            else
+                break
+            fi
+        done
     else
-        break
+        # No TTY and no env var — auto-generate so the script never silently
+        # creates a user with an empty password.
+        PROXY_PASS="$(gen_password)"
+        AUTO_PASS=1
+        echo -e "${YELLOW}⚠️  No TTY detected and PROXY_PASS not set — generated a random password.${NC}"
     fi
-done
+fi
 
-# Get port
-read -p "🔌 Port [3128]: " PROXY_PORT
+# --- Port -------------------------------------------------------------------
+if [[ -z "$PROXY_PORT" ]]; then
+    prompt PROXY_PORT "🔌 Port [3128]: "
+fi
 PROXY_PORT=${PROXY_PORT:-3128}
+
+# Sanity check
+if ! [[ "$PROXY_PORT" =~ ^[0-9]+$ ]] || (( PROXY_PORT < 1 || PROXY_PORT > 65535 )); then
+    echo -e "${RED}❌ Invalid port: $PROXY_PORT${NC}"
+    exit 1
+fi
 
 echo ""
 echo -e "${YELLOW}📦 Installing packages...${NC}"
@@ -114,11 +178,19 @@ echo ""
 echo -e "   Host: ${YELLOW}$SERVER_IP${NC}"
 echo -e "   Port: ${YELLOW}$PROXY_PORT${NC}"
 echo -e "   User: ${YELLOW}$PROXY_USER${NC}"
-echo -e "   Pass: ${YELLOW}(hidden)${NC}"
+if [[ "$AUTO_PASS" == "1" ]]; then
+    echo -e "   Pass: ${YELLOW}$PROXY_PASS${NC}  ${RED}(auto-generated — save it now!)${NC}"
+else
+    echo -e "   Pass: ${YELLOW}(hidden)${NC}"
+fi
 echo ""
 echo -e "${CYAN}🔗 Connection string:${NC}"
 echo ""
-echo -e "   ${GREEN}export HTTPS_PROXY=\"http://$PROXY_USER:PASSWORD@$SERVER_IP:$PROXY_PORT\"${NC}"
+if [[ "$AUTO_PASS" == "1" ]]; then
+    echo -e "   ${GREEN}export HTTPS_PROXY=\"http://$PROXY_USER:$PROXY_PASS@$SERVER_IP:$PROXY_PORT\"${NC}"
+else
+    echo -e "   ${GREEN}export HTTPS_PROXY=\"http://$PROXY_USER:PASSWORD@$SERVER_IP:$PROXY_PORT\"${NC}"
+fi
 echo ""
 echo -e "${CYAN}🧪 Test command:${NC}"
 echo ""
